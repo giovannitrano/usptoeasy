@@ -409,14 +409,43 @@ function render(d, logoOk) {
   const nameEl = document.getElementById('tmNameEl');
   if (nameEl) {
     nameEl.addEventListener('click', () => {
-      navigator.clipboard.writeText(tmName).then(() => {
-        const orig = nameEl.title;
-        nameEl.title = 'Copied!';
-        nameEl.style.opacity = '.6';
-        setTimeout(() => { nameEl.title = orig; nameEl.style.opacity = ''; }, 1200);
+      navigator.clipboard.writeText(normalizeForClipboard(tmName)).then(() => {
+        showToast('Added to clipboard');
       });
     });
   }
+}
+
+function normalizeForClipboard(str) {
+  const map = {
+    'Ā':'A','ā':'a','Đ':'D','đ':'d','Ę':'E','ę':'e','Ē':'E','ē':'e',
+    'ế':'e','İ':'I','ı':'i','Ÿ':'I','ÿ':'i','Ō':'O','ō':'o','ơ':'o',
+    'Ş':'S','ş':'s','Ū':'U','ū':'u','ư':'u','…':'...','·':'.'
+  };
+  return str.split('').map(c => map[c] ?? c).join('');
+}
+
+function showToast(msg) {
+  let t = document.getElementById('clipToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'clipToast';
+    t.style.cssText = `
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(12px);
+      background:rgba(26,26,24,.88); color:#fff; font-size:13px; font-weight:500;
+      padding:9px 20px; border-radius:24px; pointer-events:none;
+      opacity:0; transition:opacity .2s, transform .2s; z-index:9999;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+      backdrop-filter:blur(6px);
+    `;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => {
+    t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 1800);
 }
 
 function renderFallback(num) {
