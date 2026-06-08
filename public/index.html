@@ -363,11 +363,20 @@ function render(d, logoOk) {
     : `<div class="no-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 20M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>No logo</div>`;
 
   const nameHtml = tmName
-    ? `<div class="tm-name">${ESC(tmName)}</div>`
+    ? `<div class="tm-name" id="tmNameEl" title="Click to copy" style="cursor:pointer">${ESC(tmName)}</div>`
     : `<div class="tm-name na">Name not available — view on USPTO</div>`;
 
-  const ownerHtml = ownerInfo
-    ? `<div class="field"><div class="field-label">Owner / Applicant</div><div class="field-value">${ESC(ownerInfo)}</div></div>`
+  const cleanOwner = ownerInfo
+    ? ownerInfo
+        .replace(/Owner Name:\s*/gi, '')
+        .replace(/Owner Address:\s*/gi, '')
+        .replace(/Legal Entity Type:\s*/gi, '')
+        .replace(/Citizenship:\s*/gi, '')
+        .split('\n').map(s => s.trim()).filter(Boolean).join('\n')
+    : null;
+
+  const ownerHtml = cleanOwner
+    ? `<div class="field"><div class="field-label">Owner / Applicant</div><div class="field-value">${ESC(cleanOwner)}</div></div>`
     : `<div class="field"><div class="field-label">Owner / Applicant</div><div class="field-value na">Not available — see USPTO record</div></div>`;
 
   const statusHtml = statusDesc
@@ -395,6 +404,18 @@ function render(d, logoOk) {
   if (logoOk) {
     const t = document.getElementById('logoThumb');
     if (t) t.addEventListener('click', () => { zoomImg.src = logoUrl; zoom.classList.add('open'); });
+  }
+
+  const nameEl = document.getElementById('tmNameEl');
+  if (nameEl) {
+    nameEl.addEventListener('click', () => {
+      navigator.clipboard.writeText(tmName).then(() => {
+        const orig = nameEl.title;
+        nameEl.title = 'Copied!';
+        nameEl.style.opacity = '.6';
+        setTimeout(() => { nameEl.title = orig; nameEl.style.opacity = ''; }, 1200);
+      });
+    });
   }
 }
 
